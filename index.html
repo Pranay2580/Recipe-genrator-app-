@@ -24,11 +24,15 @@
     </script>
     <script>
       // Polyfill process.env for browser environments to prevent ReferenceErrors
-      // This is crucial for environments that don't auto-inject 'process'
+      // API Key injected to fix 403 Permission Denied error
+      const API_KEY = "AIzaSyCbLF2cOwpN18QurvLCTk6VD6yoJRmGwS8";
+
       if (typeof process === 'undefined') {
-        window.process = { env: {} };
+        window.process = { env: { API_KEY } };
       } else if (!process.env) {
-        process.env = {};
+        process.env = { API_KEY };
+      } else {
+        process.env.API_KEY = API_KEY;
       }
     </script>
   <script type="importmap">

@@ -77,9 +77,6 @@ export const generateRecipes = async (
         throw new Error(msg);
     }
 
-    // DEBUG: Log the first 4 chars to verify key presence without leaking the full key
-    console.log(`[GeminiService] Initializing with key: ${apiKey.substring(0, 4)}...`);
-
     const ai = new GoogleGenAI({ apiKey: apiKey });
 
     const userPrompt = `

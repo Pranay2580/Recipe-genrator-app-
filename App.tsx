@@ -98,19 +98,25 @@ const App: React.FC = () => {
                 // Check for 403 Permission Denied
                 if (rawMsg.includes('403') || rawMsg.includes('PERMISSION_DENIED') || rawMsg.includes('The caller does not have permission')) {
                      friendlyMsg = (
-                        <div>
-                            <strong>Access Denied (403):</strong> The API Key is valid, but the project does not have permission.
-                            <ul className="list-disc list-inside mt-2 text-sm">
-                                <li>Ensure <strong>"Generative Language API"</strong> is enabled in your Google Cloud Console.</li>
-                                <li>Check if your API Key has <strong>HTTP Referrer restrictions</strong> blocking this domain.</li>
-                            </ul>
+                        <div className="flex flex-col gap-2">
+                            <div>
+                                <strong>Permission Denied (403):</strong> Your API Key is blocked or not enabled.
+                            </div>
+                            <div className="bg-white bg-opacity-50 p-3 rounded text-sm text-red-800">
+                                <strong>Steps to fix:</strong>
+                                <ol className="list-decimal list-inside mt-1 space-y-1">
+                                    <li>Your current key is invalid. You need a new one.</li>
+                                    <li>Click the button below to get a new key from Google AI Studio.</li>
+                                    <li>Update your app settings with the new key.</li>
+                                </ol>
+                            </div>
                             <a 
-                                href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" 
+                                href="https://aistudio.google.com/app/apikey" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="inline-block mt-2 underline font-bold hover:text-red-900"
+                                className="inline-flex items-center justify-center gap-2 bg-red-700 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-800 transition shadow-sm w-fit mt-1"
                             >
-                                Enable API in Cloud Console &rarr;
+                                Get New API Key &rarr;
                             </a>
                         </div>
                      );
@@ -154,12 +160,11 @@ const App: React.FC = () => {
                 </div>
                 <div className="lg:col-span-8 xl:col-span-9">
                     {isLoading && <LoadingSpinner />}
-                    {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-sm" role="alert">
-                        <div className="flex items-center gap-2 mb-1">
-                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                             <strong className="font-bold">Error</strong>
+                    {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-4 rounded-r-lg shadow-sm" role="alert">
+                        <div className="flex items-start gap-3">
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                             <div className="flex-grow">{error}</div>
                         </div>
-                        <div className="block sm:inline">{error}</div>
                     </div>}
                     
                     {!isLoading && !hasSearched && !error && (
