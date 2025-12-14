@@ -88,8 +88,11 @@ const App: React.FC = () => {
             });
 
         } catch (e: any) {
-            console.error(e);
-            setError('Failed to generate recipes. Please try again.');
+            console.error("Recipe generation error:", e);
+            // Display the actual error message if available, otherwise a generic one.
+            // This helps diagnose "Permission Denied" or "API Key missing" issues in production.
+            const errorMessage = e.message || e.toString() || 'Failed to generate recipes. Please try again.';
+            setError(errorMessage);
             setIsLoading(false);
         }
     }, [selectedIngredients, selectedCuisine, selectedDiet, selectedTime, selectedLanguage, selectedImageSize]);
@@ -124,7 +127,10 @@ const App: React.FC = () => {
                 </div>
                 <div className="lg:col-span-8 xl:col-span-9">
                     {isLoading && <LoadingSpinner />}
-                    {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg" role="alert">{error}</div>}
+                    {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg" role="alert">
+                        <strong>Error: </strong>{error}
+                        <br/><span className="text-sm mt-1 block opacity-80">Check console for details if needed.</span>
+                    </div>}
                     
                     {!isLoading && !hasSearched && !error && (
                         <WelcomeScreen />

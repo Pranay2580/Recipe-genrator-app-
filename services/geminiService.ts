@@ -47,6 +47,17 @@ const responseSchema = {
     }
 };
 
+const getApiKey = (): string | undefined => {
+    // Robustly retrieve API key, handling various build tool behaviors
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+        const key = process.env.API_KEY;
+        // Check if the build tool replaced it with the literal string "undefined"
+        if (key !== 'undefined' && key.trim() !== '') {
+            return key;
+        }
+    }
+    return undefined;
+};
 
 export const generateRecipes = async (
     ingredients: string[],
@@ -56,13 +67,12 @@ export const generateRecipes = async (
     language: string
 ): Promise<{ recipes: Recipe[], recommendations: string | null }> => {
     
-    // API key must be available in the environment.
-    // Ensure process is defined to avoid ReferenceError in some browser builds
-    const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
+    const apiKey = getApiKey();
 
     if (!apiKey) {
-        console.error("API Key is missing. Please ensure process.env.API_KEY is configured for the application to function.");
-        throw new Error("API Key not found. Cannot generate recipes.");
+        const msg = "API Key is missing or invalid. Please ensure process.env.API_KEY is configured.";
+        console.error(msg);
+        throw new Error(msg);
     }
 
     const ai = new GoogleGenAI({ apiKey: apiKey });
@@ -107,8 +117,9 @@ export const generateRecipes = async (
             recommendations: parsedResponse.recommendations || null,
         };
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error generating recipes with Gemini:", error);
+        // If it's a permission denied error, throw it so UI shows it
         throw error;
     }
 };
@@ -119,10 +130,10 @@ export const generateRecipeImage = async (
     size: '1K' | '2K' | '4K'
 ): Promise<string | null> => {
     
-    const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
+    const apiKey = getApiKey();
 
     if (!apiKey) {
-        console.warn("API Key is missing. Image generation will not work. Please ensure process.env.API_KEY is configured.");
+        console.warn("API Key is missing. Image generation will not work.");
         return null;
     }
 
@@ -156,7 +167,7 @@ export const generateRecipeImage = async (
 };
 
 export const createChefChat = (recipe: Recipe): Chat => {
-    const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
+    const apiKey = getApiKey();
 
     if (!apiKey) {
          throw new Error("API Key missing");
