@@ -24,7 +24,7 @@ const DetailSection: React.FC<{ title: string; children: React.ReactNode, icon: 
 
 export const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, onClose, onStartCooking, isFavorite, onToggleFavorite }) => {
     const [showChat, setShowChat] = useState(false);
-    const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
+    const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
 
     const CloseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
     const IngredientsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
@@ -35,11 +35,20 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, onClose, onSta
 
     const displayImage = recipe.imageUrl || `https://picsum.photos/seed/${recipe.recipeName}/800/400`;
 
-    const handleShare = () => {
+    const handleShare = async () => {
         const shareText = `Check out this recipe for ${recipe.recipeName}!\n\n${recipe.description}\n\nKey Ingredients: ${recipe.requiredIngredients.slice(0, 5).join(', ')}... and more!`;
-        navigator.clipboard.writeText(shareText);
-        setCopyStatus('copied');
-        setTimeout(() => setCopyStatus('idle'), 2000);
+        
+        try {
+            await navigator.clipboard.writeText(shareText);
+            setCopyStatus('copied');
+            setTimeout(() => setCopyStatus('idle'), 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            setCopyStatus('error');
+            setTimeout(() => setCopyStatus('idle'), 2000);
+            // Fallback for some browsers or non-secure contexts
+            alert("Could not copy to clipboard. Please copy manually.");
+        }
     };
 
     return (
@@ -72,6 +81,8 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, onClose, onSta
                             >
                                 {copyStatus === 'copied' ? (
                                     <span className="text-xs font-bold text-green-600">Copied!</span>
+                                ) : copyStatus === 'error' ? (
+                                     <span className="text-xs font-bold text-red-600">Error</span>
                                 ) : (
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />

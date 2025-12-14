@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Recipe } from '../types';
 import { createChefChat } from '../services/geminiService';
-import { Chat, GenerateContentResponse } from "@google/genai";
+import type { Chat, GenerateContentResponse } from "@google/genai";
 
 interface ChefChatProps {
     recipe: Recipe;
@@ -23,10 +23,13 @@ export const ChefChat: React.FC<ChefChatProps> = ({ recipe }) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        // Reset chat when recipe changes
+        setMessages([{ role: 'model', text: `Hi! I'm your AI Chef. Ask me anything about cooking ${recipe.recipeName}!` }]);
         try {
             chatRef.current = createChefChat(recipe);
         } catch (e) {
             console.error("Failed to init chat", e);
+            // Don't alert user yet, only if they try to chat
         }
     }, [recipe]);
 
@@ -35,7 +38,13 @@ export const ChefChat: React.FC<ChefChatProps> = ({ recipe }) => {
     }, [messages]);
 
     const handleSend = async () => {
-        if (!input.trim() || !chatRef.current) return;
+        if (!input.trim()) return;
+        
+        if (!chatRef.current) {
+             setMessages(prev => [...prev, { role: 'user', text: input.trim() }, { role: 'model', text: "I'm having trouble connecting. Please check your API key configuration." }]);
+             setInput('');
+             return;
+        }
 
         const userMsg = input.trim();
         setInput('');
@@ -48,7 +57,7 @@ export const ChefChat: React.FC<ChefChatProps> = ({ recipe }) => {
             setMessages(prev => [...prev, { role: 'model', text }]);
         } catch (error) {
             console.error("Chat error", error);
-            setMessages(prev => [...prev, { role: 'model', text: "Sorry, I'm having trouble connecting to the kitchen right now." }]);
+            setMessages(prev => [...prev, { role: 'model', text: "Sorry, I'm having trouble thinking right now." }]);
         } finally {
             setIsLoading(false);
         }

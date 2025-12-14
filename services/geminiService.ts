@@ -57,12 +57,15 @@ export const generateRecipes = async (
 ): Promise<{ recipes: Recipe[], recommendations: string | null }> => {
     
     // API key must be available in the environment.
-    if (!process.env.API_KEY) {
+    // Ensure process is defined to avoid ReferenceError in some browser builds
+    const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
+
+    if (!apiKey) {
         console.error("API Key is missing. Please ensure process.env.API_KEY is configured for the application to function.");
         throw new Error("API Key not found. Cannot generate recipes.");
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: apiKey });
 
     const userPrompt = `
         User selected ingredients: ${ingredients.join(', ')}
@@ -92,10 +95,10 @@ export const generateRecipes = async (
             throw new Error("Empty response from AI");
         }
 
-        // Strip markdown code blocks if present
-        if (jsonText.startsWith('```')) {
-            jsonText = jsonText.replace(/^```json\s*/, '').replace(/^```\s*/, '').replace(/\s*```$/, '');
-        }
+        // Clean up markdown code blocks to ensure valid JSON
+        jsonText = jsonText.replace(/^```json\s*/, '')
+                           .replace(/^```\s*/, '')
+                           .replace(/\s*```$/, '');
 
         const parsedResponse = JSON.parse(jsonText);
         
@@ -115,13 +118,15 @@ export const generateRecipeImage = async (
     description: string,
     size: '1K' | '2K' | '4K'
 ): Promise<string | null> => {
-    // API key must be available in the environment.
-    if (!process.env.API_KEY) {
+    
+    const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
+
+    if (!apiKey) {
         console.warn("API Key is missing. Image generation will not work. Please ensure process.env.API_KEY is configured.");
         return null;
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: apiKey });
 
     try {
         // Using 'gemini-2.5-flash-image' as 'gemini-1.5-flash' is prohibited and 'gemini-3-pro-image-preview' requires payment.
@@ -151,10 +156,12 @@ export const generateRecipeImage = async (
 };
 
 export const createChefChat = (recipe: Recipe): Chat => {
-    if (!process.env.API_KEY) {
+    const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
+
+    if (!apiKey) {
          throw new Error("API Key missing");
     }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: apiKey });
     
     const context = `You are a professional, friendly chef assistant. The user is currently viewing the recipe: "${recipe.recipeName}".
     

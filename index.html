@@ -22,6 +22,12 @@
         },
       }
     </script>
+    <script>
+      // Polyfill process.env for browser environments to prevent ReferenceErrors
+      if (typeof process === 'undefined') {
+        window.process = { env: {} };
+      }
+    </script>
   <script type="importmap">
 {
   "imports": {
