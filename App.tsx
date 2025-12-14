@@ -24,7 +24,7 @@ const App: React.FC = () => {
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [recommendations, setRecommendations] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<React.ReactNode | null>(null);
     const [hasSearched, setHasSearched] = useState(false);
     
     const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
@@ -91,26 +91,32 @@ const App: React.FC = () => {
             console.error("Recipe generation error:", e);
             
             const rawMsg = e.message || e.toString() || 'Failed to generate recipes. Please try again.';
-            let friendlyMsg = rawMsg;
+            let friendlyMsg: React.ReactNode = rawMsg;
 
-            // Attempt to parse JSON error from the raw message string if present (e.g. "Error: {...}")
+            // Attempt to parse JSON error from the raw message string
             try {
-                const jsonMatch = rawMsg.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                    const errorObj = JSON.parse(jsonMatch[0]);
-                    if (errorObj.error) {
-                        const { code, status, message } = errorObj.error;
-                        if (code === 403 || status === 'PERMISSION_DENIED') {
-                            friendlyMsg = "Access Denied (403). Please ensure: 1) Your API Key is valid. 2) 'Generative Language API' is enabled in Google Cloud Console. 3) No referrer restrictions are blocking this domain.";
-                        } else {
-                            friendlyMsg = message;
-                        }
-                    }
-                } else if (rawMsg.includes('403') || rawMsg.toLowerCase().includes('permission denied')) {
-                     friendlyMsg = "Access Denied. Please check your API Key permissions.";
+                // Check for 403 Permission Denied
+                if (rawMsg.includes('403') || rawMsg.includes('PERMISSION_DENIED') || rawMsg.includes('The caller does not have permission')) {
+                     friendlyMsg = (
+                        <div>
+                            <strong>Access Denied (403):</strong> The API Key is valid, but the project does not have permission.
+                            <ul className="list-disc list-inside mt-2 text-sm">
+                                <li>Ensure <strong>"Generative Language API"</strong> is enabled in your Google Cloud Console.</li>
+                                <li>Check if your API Key has <strong>HTTP Referrer restrictions</strong> blocking this domain.</li>
+                            </ul>
+                            <a 
+                                href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="inline-block mt-2 underline font-bold hover:text-red-900"
+                            >
+                                Enable API in Cloud Console &rarr;
+                            </a>
+                        </div>
+                     );
                 }
             } catch (parseErr) {
-                // Fallback to raw message if parsing fails
+                // Fallback
             }
 
             setError(friendlyMsg);
@@ -150,10 +156,10 @@ const App: React.FC = () => {
                     {isLoading && <LoadingSpinner />}
                     {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-sm" role="alert">
                         <div className="flex items-center gap-2 mb-1">
-                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                              <strong className="font-bold">Error</strong>
                         </div>
-                        <span className="block sm:inline">{error}</span>
+                        <div className="block sm:inline">{error}</div>
                     </div>}
                     
                     {!isLoading && !hasSearched && !error && (
