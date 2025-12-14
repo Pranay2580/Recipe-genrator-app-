@@ -1,0 +1,5 @@
+{
+  "name": "Smart Recipe Generator",
+  "description": "This app helps users generate recipes using only the ingredients they have. They simply select items like potato, tomato, onion, oil, vegetables, spices etc., and the AI instantly creates multiple recipes, steps, cooking time, variations, shopping list, and nutritional information. Uses Gemini API for powerful, high-quality cooking guidance.",
+  "requestFramePermissions": []
+}
