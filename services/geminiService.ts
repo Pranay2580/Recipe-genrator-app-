@@ -50,9 +50,11 @@ const responseSchema = {
 const getApiKey = (): string | undefined => {
     // Robustly retrieve API key, handling various build tool behaviors
     if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-        const key = process.env.API_KEY;
+        let key = process.env.API_KEY;
         // Check if the build tool replaced it with the literal string "undefined"
         if (key !== 'undefined' && key.trim() !== '') {
+            // Remove surrounding quotes if present (common env var issue)
+            key = key.replace(/^["']|["']$/g, '');
             return key;
         }
     }

@@ -89,10 +89,31 @@ const App: React.FC = () => {
 
         } catch (e: any) {
             console.error("Recipe generation error:", e);
-            // Display the actual error message if available, otherwise a generic one.
-            // This helps diagnose "Permission Denied" or "API Key missing" issues in production.
-            const errorMessage = e.message || e.toString() || 'Failed to generate recipes. Please try again.';
-            setError(errorMessage);
+            
+            const rawMsg = e.message || e.toString() || 'Failed to generate recipes. Please try again.';
+            let friendlyMsg = rawMsg;
+
+            // Attempt to parse JSON error from the raw message string if present (e.g. "Error: {...}")
+            try {
+                const jsonMatch = rawMsg.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    const errorObj = JSON.parse(jsonMatch[0]);
+                    if (errorObj.error) {
+                        const { code, status, message } = errorObj.error;
+                        if (code === 403 || status === 'PERMISSION_DENIED') {
+                            friendlyMsg = "Access Denied (403). Please ensure: 1) Your API Key is valid. 2) 'Generative Language API' is enabled in Google Cloud Console. 3) No referrer restrictions are blocking this domain.";
+                        } else {
+                            friendlyMsg = message;
+                        }
+                    }
+                } else if (rawMsg.includes('403') || rawMsg.toLowerCase().includes('permission denied')) {
+                     friendlyMsg = "Access Denied. Please check your API Key permissions.";
+                }
+            } catch (parseErr) {
+                // Fallback to raw message if parsing fails
+            }
+
+            setError(friendlyMsg);
             setIsLoading(false);
         }
     }, [selectedIngredients, selectedCuisine, selectedDiet, selectedTime, selectedLanguage, selectedImageSize]);
@@ -127,9 +148,12 @@ const App: React.FC = () => {
                 </div>
                 <div className="lg:col-span-8 xl:col-span-9">
                     {isLoading && <LoadingSpinner />}
-                    {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg" role="alert">
-                        <strong>Error: </strong>{error}
-                        <br/><span className="text-sm mt-1 block opacity-80">Check console for details if needed.</span>
+                    {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-sm" role="alert">
+                        <div className="flex items-center gap-2 mb-1">
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                             <strong className="font-bold">Error</strong>
+                        </div>
+                        <span className="block sm:inline">{error}</span>
                     </div>}
                     
                     {!isLoading && !hasSearched && !error && (
