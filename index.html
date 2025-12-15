@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -23,9 +24,8 @@
     </script>
     <script>
       // Polyfill process.env for browser environments to prevent ReferenceErrors
-      // API Key injected to fix 403 Permission Denied error
-      // Updated to the new key provided in ai_studio_code.txt
-      const API_KEY = "AIzaSyCWN2JrhjZJf9ViOog0BEI6P9aUMiH-OPA";
+      // API Key updated to user provided OpenRouter key
+      const API_KEY = "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";
 
       if (typeof process === 'undefined') {
         window.process = { env: { API_KEY } };

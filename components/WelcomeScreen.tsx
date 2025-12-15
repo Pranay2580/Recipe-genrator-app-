@@ -4,7 +4,7 @@ import React from 'react';
 export const WelcomeScreen: React.FC = () => {
     return (
         <div className="text-center bg-white p-8 md:p-12 rounded-2xl shadow-lg">
-            <h2 className="text-4xl md:text-5xl font-bold font-serif text-orange-600 mb-4">Welcome to Your AI Chef!</h2>
+            <h2 className="text-4xl md:text-5xl font-bold font-serif text-orange-600 mb-4">Yo! Welcome to Your AI Chef!</h2>
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
                 Ready to cook something amazing? Just select the ingredients you have on the left, and I'll whip up some delicious recipe ideas for you.
             </p>

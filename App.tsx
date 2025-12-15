@@ -90,39 +90,79 @@ const App: React.FC = () => {
         } catch (e: any) {
             console.error("Recipe generation error:", e);
             
-            const rawMsg = e.message || e.toString() || 'Failed to generate recipes. Please try again.';
-            let friendlyMsg: React.ReactNode = rawMsg;
+            let errorDetails = '';
+            let isPermissionError = false;
 
-            // Attempt to parse JSON error from the raw message string
-            try {
-                // Check for 403 Permission Denied
-                if (rawMsg.includes('403') || rawMsg.includes('PERMISSION_DENIED') || rawMsg.includes('The caller does not have permission')) {
-                     friendlyMsg = (
-                        <div className="flex flex-col gap-2">
-                            <div>
-                                <strong>Permission Denied (403):</strong> Your API Key is blocked or not enabled.
-                            </div>
-                            <div className="bg-white bg-opacity-50 p-3 rounded text-sm text-red-800">
-                                <strong>Steps to fix:</strong>
-                                <ol className="list-decimal list-inside mt-1 space-y-1">
-                                    <li>Your current key is invalid. You need a new one.</li>
-                                    <li>Click the button below to get a new key from Google AI Studio.</li>
-                                    <li>Update your app settings with the new key.</li>
-                                </ol>
-                            </div>
-                            <a 
-                                href="https://aistudio.google.com/app/apikey" 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center gap-2 bg-red-700 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-800 transition shadow-sm w-fit mt-1"
-                            >
-                                Get New API Key &rarr;
-                            </a>
-                        </div>
-                     );
+            // 1. Extract string representation from various error formats
+            if (typeof e === 'string') {
+                errorDetails = e;
+            } else if (e instanceof Error) {
+                errorDetails = e.message;
+            } else if (typeof e === 'object') {
+                // Try to extract message from Google GenAI error object structure
+                if (e.error && e.error.message) {
+                    errorDetails = e.error.message;
+                } else {
+                    errorDetails = JSON.stringify(e);
                 }
-            } catch (parseErr) {
-                // Fallback
+                
+                // Check for 403 in object properties explicitly
+                if (e.error && (e.error.code === 403 || e.error.status === 'PERMISSION_DENIED')) {
+                    isPermissionError = true;
+                }
+            }
+
+            // 2. Check for keywords in the string representation
+            if (errorDetails.includes('403') || 
+                errorDetails.includes('PERMISSION_DENIED') || 
+                errorDetails.includes('The caller does not have permission')) {
+                isPermissionError = true;
+            }
+
+            let friendlyMsg: React.ReactNode = errorDetails || 'Failed to generate recipes. Please try again.';
+            
+            // Check specifically for OpenRouter keys being used with the Google SDK
+            // We check process.env safely just in case
+            const currentKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : '';
+            const isOpenRouterKey = currentKey?.startsWith('sk-or-v1');
+
+            if (isPermissionError) {
+                 friendlyMsg = (
+                    <div className="flex flex-col gap-2 text-left">
+                        <div className="font-bold text-red-800 flex items-center gap-2">
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
+                             Permission Denied (403)
+                        </div>
+                        <div className="text-sm text-red-700">
+                            {isOpenRouterKey 
+                                ? "You are using an OpenRouter API Key (sk-or-v1...). This application uses the official Google GenAI SDK which typically requires a native Google Cloud API Key (starts with AIza)."
+                                : "The request was rejected by Google servers. This is usually due to missing API permissions or key restrictions."
+                            }
+                        </div>
+                        <div className="bg-white bg-opacity-60 p-3 rounded text-sm text-gray-800 border border-red-200 mt-1">
+                            <strong>Possible Fixes:</strong>
+                            <ol className="list-decimal list-inside mt-2 space-y-2">
+                                {isOpenRouterKey ? (
+                                    <li>
+                                        <strong>Use a Google Key:</strong><br/>
+                                        Get a free API key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline text-blue-700 font-bold">Google AI Studio</a>.
+                                    </li>
+                                ) : (
+                                    <>
+                                    <li>
+                                        <strong>Enable the API:</strong><br/>
+                                        Go to <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank" rel="noopener noreferrer" className="underline text-blue-700 font-bold hover:text-blue-900">Google Cloud Console</a> and click <strong>Enable</strong>.
+                                    </li>
+                                    <li>
+                                        <strong>Check Restrictions:</strong><br/>
+                                        Ensure your API key has no Application restrictions preventing access from this URL.
+                                    </li>
+                                    </>
+                                )}
+                            </ol>
+                        </div>
+                    </div>
+                 );
             }
 
             setError(friendlyMsg);
@@ -162,7 +202,7 @@ const App: React.FC = () => {
                     {isLoading && <LoadingSpinner />}
                     {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 px-4 py-4 rounded-r-lg shadow-sm" role="alert">
                         <div className="flex items-start gap-3">
-                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 flex-shrink-0 mt-0.5 text-red-600" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                              <div className="flex-grow">{error}</div>
                         </div>
                     </div>}

@@ -48,17 +48,8 @@ const responseSchema = {
 };
 
 const getApiKey = (): string | undefined => {
-    // Robustly retrieve API key, handling various build tool behaviors
-    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-        const key = "AIzaSyCWN2JrhjZJf9ViOog0BEI6P9aUMiH-OPA";
-        // Check if the build tool replaced it with the literal string "undefined"
-        if (key !== 'undefined' && key.trim() !== '') {
-            // Remove surrounding quotes if present (common env var issue)
-            key = key.replace(/^["']|["']$/g, '');
-            return key;
-        }
-    }
-    return undefined;
+    // User provided OpenRouter key
+    return "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".trim();
 };
 
 export const generateRecipes = async (
@@ -72,7 +63,7 @@ export const generateRecipes = async (
     const apiKey = getApiKey();
 
     if (!apiKey) {
-        const msg = "API Key is missing or invalid. Please ensure process.env.API_KEY is configured.";
+        const msg = "API Key is missing. Please check your configuration.";
         console.error(msg);
         throw new Error(msg);
     }
@@ -142,8 +133,7 @@ export const generateRecipeImage = async (
     const ai = new GoogleGenAI({ apiKey: apiKey });
 
     try {
-        // Using 'gemini-2.5-flash-image' as 'gemini-1.5-flash' is prohibited and 'gemini-3-pro-image-preview' requires payment.
-        // Note: imageSize is not supported in the standard flash image model, so it is omitted from config.
+        // Using 'gemini-2.5-flash-image' as 'gemini-1.5-flash' is prohibited.
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: {
@@ -176,7 +166,7 @@ export const createChefChat = (recipe: Recipe): Chat => {
     }
     const ai = new GoogleGenAI({ apiKey: apiKey });
     
-    const context = `You are a professional, friendly chef assistant. The user is currently viewing the recipe: "${recipe.recipeName}".
+    const context = `Yo! You are a professional, friendly, and cool chef assistant. The user is currently viewing the recipe: "${recipe.recipeName}".
     
     Recipe Details:
     - Description: ${recipe.description}
@@ -185,7 +175,7 @@ export const createChefChat = (recipe: Recipe): Chat => {
     
     Your goal is to answer the user's questions about this specific recipe.
     You can suggest substitutions, explain cooking techniques mentioned in the steps, or give advice on storage and leftovers.
-    Keep your answers concise, helpful, and encouraging. Do not invent ingredients not mentioned unless asked for substitutions.`;
+    Keep your answers concise, helpful, and encouraging. Use a friendly "Yo, Chef!" vibe if it fits.`;
 
     return ai.chats.create({
         model: 'gemini-2.5-flash',
